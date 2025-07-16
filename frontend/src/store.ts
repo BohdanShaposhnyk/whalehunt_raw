@@ -48,6 +48,12 @@ export const botApi = createApi({
                 body: settings,
             }),
         }),
+        sendTestNotification: builder.mutation<{ success: boolean }, void>({
+            query: () => ({
+                url: 'test',
+                method: 'POST',
+            }),
+        }),
     }),
 });
 
@@ -71,4 +77,5 @@ export const {
 export const {
     useGetBotSettingsQuery,
     useUpdateBotSettingsMutation,
+    useSendTestNotificationMutation,
 } = botApi; 

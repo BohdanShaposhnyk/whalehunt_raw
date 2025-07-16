@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { Box, Button, TextField, Typography, Paper, CircularProgress, Alert } from '@mui/material';
-import { useGetBotSettingsQuery, useUpdateBotSettingsMutation } from './store';
+import { useGetBotSettingsQuery, useUpdateBotSettingsMutation, useSendTestNotificationMutation } from './store';
 
 const BotSettings: React.FC = () => {
     const { data, isLoading, isError, refetch } = useGetBotSettingsQuery();
     const [updateBotSettings, { isLoading: isSaving, isSuccess: isSaved, isError: isSaveError, error: saveError }] = useUpdateBotSettingsMutation();
+    const [sendTestNotification, { isLoading: isTesting, isSuccess: isTested, isError: isTestError, error: testError }] = useSendTestNotificationMutation();
 
     const [form, setForm] = useState({
         botToken: '',
@@ -56,9 +57,18 @@ const BotSettings: React.FC = () => {
                     <Button type="submit" variant="contained" disabled={isSaving}>
                         {isSaving ? <CircularProgress size={24} /> : 'Save'}
                     </Button>
+                    <Button
+                        variant="outlined"
+                        onClick={async () => { await sendTestNotification(); }}
+                        disabled={isTesting}
+                    >
+                        {isTesting ? <CircularProgress size={24} /> : 'Send Test Notification'}
+                    </Button>
                 </Box>
                 {isSaved && <Alert severity="success" sx={{ mt: 2 }}>Bot settings saved!</Alert>}
                 {isSaveError && <Alert severity="error" sx={{ mt: 2 }}>{(saveError as any)?.data?.message || 'Failed to save.'}</Alert>}
+                {isTested && <Alert severity="success" sx={{ mt: 2 }}>Test notification sent!</Alert>}
+                {isTestError && <Alert severity="error" sx={{ mt: 2 }}>{(testError as any)?.data?.error || 'Failed to send test notification.'}</Alert>}
             </form>
         </Paper>
     );
