@@ -1,18 +1,15 @@
 import React, { useState } from 'react';
 import { Box, Button, TextField, Typography, Paper, CircularProgress, Alert, Switch, FormControlLabel } from '@mui/material';
-import { useGetSettingsQuery, useUpdateSettingsMutation, useTestTelegramMutation } from './store';
+import { useGetAlertSettingsQuery, useUpdateAlertSettingsMutation } from './store';
 
 const Settings: React.FC = () => {
-    const { data, isLoading, isError, refetch } = useGetSettingsQuery();
-    const [updateSettings, { isLoading: isSaving, isSuccess: isSaved, isError: isSaveError, error: saveError }] = useUpdateSettingsMutation();
-    const [testTelegram, { isLoading: isTesting, isSuccess: isTested, isError: isTestError }] = useTestTelegramMutation();
+    const { data, isLoading, isError, refetch } = useGetAlertSettingsQuery();
+    const [updateAlertSettings, { isLoading: isSaving, isSuccess: isSaved, isError: isSaveError, error: saveError }] = useUpdateAlertSettingsMutation();
 
     const [form, setForm] = useState({
-        botToken: '',
-        chatId: '',
-        enabled: true,
         greenRed: 0,
         blueYellow: 0,
+        enabled: true,
         pollingInterval: 10,
     });
 
@@ -30,20 +27,16 @@ const Settings: React.FC = () => {
 
     const handleSave = async (e: React.FormEvent) => {
         e.preventDefault();
-        await updateSettings(form);
+        await updateAlertSettings(form);
         refetch();
     };
 
-    const handleTest = async () => {
-        await testTelegram();
-    };
-
     if (isLoading) return <CircularProgress />;
-    if (isError) return <Alert severity="error">Failed to load settings.</Alert>;
+    if (isError) return <Alert severity="error">Failed to load alert settings.</Alert>;
 
     return (
         <Paper sx={{ p: 3, maxWidth: 400, mx: 'auto', mt: 4 }}>
-            <Typography variant="h5" gutterBottom>Settings</Typography>
+            <Typography variant="h5" gutterBottom>Alert Settings</Typography>
             <form onSubmit={handleSave}>
                 <TextField
                     label="Whale Threshold (greenRed)"
@@ -72,22 +65,6 @@ const Settings: React.FC = () => {
                     fullWidth
                     margin="normal"
                 />
-                <TextField
-                    label="Telegram Bot Token"
-                    name="botToken"
-                    value={form.botToken}
-                    onChange={handleChange}
-                    fullWidth
-                    margin="normal"
-                />
-                <TextField
-                    label="Telegram Chat ID"
-                    name="chatId"
-                    value={form.chatId}
-                    onChange={handleChange}
-                    fullWidth
-                    margin="normal"
-                />
                 <FormControlLabel
                     control={<Switch checked={!!form.enabled} onChange={e => setForm(prev => ({ ...prev, enabled: e.target.checked }))} name="enabled" />}
                     label="Enable Notifications"
@@ -97,14 +74,9 @@ const Settings: React.FC = () => {
                     <Button type="submit" variant="contained" disabled={isSaving}>
                         {isSaving ? <CircularProgress size={24} /> : 'Save'}
                     </Button>
-                    <Button variant="outlined" onClick={handleTest} disabled={isTesting}>
-                        {isTesting ? <CircularProgress size={24} /> : 'Send Test Notification'}
-                    </Button>
                 </Box>
                 {isSaved && <Alert severity="success" sx={{ mt: 2 }}>Settings saved!</Alert>}
                 {isSaveError && <Alert severity="error" sx={{ mt: 2 }}>{(saveError as any)?.data?.message || 'Failed to save.'}</Alert>}
-                {isTested && <Alert severity="success" sx={{ mt: 2 }}>Test notification sent!</Alert>}
-                {isTestError && <Alert severity="error" sx={{ mt: 2 }}>Failed to send test notification.</Alert>}
             </form>
         </Paper>
     );

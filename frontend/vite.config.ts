@@ -6,7 +6,8 @@ export default defineConfig({
   plugins: [react()],
   server: {
     proxy: {
-      '/settings': 'http://localhost:3001',
+      '/alert-settings': 'http://localhost:3001',
+      '/bot-settings': 'http://localhost:3001',
       '/test': 'http://localhost:3001',
     },
   },

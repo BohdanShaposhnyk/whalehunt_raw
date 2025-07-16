@@ -2,36 +2,50 @@ import { configureStore } from '@reduxjs/toolkit';
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 import type { BaseQueryFn, FetchArgs, FetchBaseQueryError } from '@reduxjs/toolkit/query/react';
 
-const API_BASE_URL = 'https://whalehuntraw-production.up.railway.app'; // Assumes same origin, adjust if needed
-// const API_BASE_URL = '/'; // Assumes same origin, adjust if needed
+const API_BASE_URL = 'https://whalehuntraw-production.up.railway.app';
+// const API_BASE_URL = './';
 
-type Settings = {
-    botToken: string;
-    chatId: string;
-    enabled: boolean;
+type AlertSettings = {
     greenRed: number;
     blueYellow: number;
+    enabled: boolean;
     pollingInterval: number;
 };
 
-export const apiSlice = createApi({
-    reducerPath: 'api',
+type BotSettings = {
+    botToken: string;
+    chatId: string;
+};
+
+export const alertApi = createApi({
+    reducerPath: 'alertApi',
     baseQuery: fetchBaseQuery({ baseUrl: API_BASE_URL }) as BaseQueryFn<string | FetchArgs, unknown, FetchBaseQueryError>,
     endpoints: (builder) => ({
-        getSettings: builder.query<Settings, void>({
-            query: () => 'settings',
+        getAlertSettings: builder.query<AlertSettings, void>({
+            query: () => 'alert-settings',
         }),
-        updateSettings: builder.mutation<Settings, Partial<Settings>>({
-            query: (settings: Partial<Settings>) => ({
-                url: 'settings',
+        updateAlertSettings: builder.mutation<AlertSettings, Partial<AlertSettings>>({
+            query: (settings: Partial<AlertSettings>) => ({
+                url: 'alert-settings',
                 method: 'POST',
                 body: settings,
             }),
         }),
-        testTelegram: builder.mutation<{ success: boolean }, void>({
-            query: () => ({
-                url: 'test',
+    }),
+});
+
+export const botApi = createApi({
+    reducerPath: 'botApi',
+    baseQuery: fetchBaseQuery({ baseUrl: API_BASE_URL }) as BaseQueryFn<string | FetchArgs, unknown, FetchBaseQueryError>,
+    endpoints: (builder) => ({
+        getBotSettings: builder.query<BotSettings, void>({
+            query: () => 'bot-settings',
+        }),
+        updateBotSettings: builder.mutation<BotSettings, Partial<BotSettings>>({
+            query: (settings: Partial<BotSettings>) => ({
+                url: 'bot-settings',
                 method: 'POST',
+                body: settings,
             }),
         }),
     }),
@@ -39,17 +53,22 @@ export const apiSlice = createApi({
 
 export const store = configureStore({
     reducer: {
-        [apiSlice.reducerPath]: apiSlice.reducer,
+        [alertApi.reducerPath]: alertApi.reducer,
+        [botApi.reducerPath]: botApi.reducer,
     },
     middleware: (getDefaultMiddleware) =>
-        getDefaultMiddleware().concat(apiSlice.middleware),
+        getDefaultMiddleware().concat(alertApi.middleware, botApi.middleware),
 });
 
 export type RootState = ReturnType<typeof store.getState>;
 export type AppDispatch = typeof store.dispatch;
 
 export const {
-    useGetSettingsQuery,
-    useUpdateSettingsMutation,
-    useTestTelegramMutation,
-} = apiSlice; 
+    useGetAlertSettingsQuery,
+    useUpdateAlertSettingsMutation,
+} = alertApi;
+
+export const {
+    useGetBotSettingsQuery,
+    useUpdateBotSettingsMutation,
+} = botApi; 
