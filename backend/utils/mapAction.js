@@ -61,6 +61,8 @@ function mapAction(apiAction) {
         outValue,
         maxValue,
         pools,
+        height: apiAction.height,
+        metadata: apiAction.metadata,
     };
 }
 

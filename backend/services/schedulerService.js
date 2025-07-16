@@ -1,6 +1,6 @@
 const axios = require('axios');
 const mapAction = require('../utils/mapAction');
-const { getSettings } = require('./settingsService');
+const { getAlertSettings } = require('./settingsService');
 const { sendTelegramMessage } = require('./telegramService');
 const { formatSwapMessage } = require('../utils/formatMessage');
 
@@ -9,8 +9,8 @@ let lastNotifiedTxids = new Set();
 let schedulerInterval = null;
 
 function runScheduler() {
-    getSettings(async (settings) => {
-        if (!settings.enabled || !settings.botToken || !settings.chatId) return;
+    getAlertSettings(async (settings) => {
+        if (!settings.enabled) return;
         try {
             const { data } = await axios.get(VANAHEIMEX_API);
             const actions = Array.isArray(data) ? data : data.actions || data.data || [];
@@ -23,8 +23,8 @@ function runScheduler() {
                     const msg = formatSwapMessage(action);
                     try {
                         await sendTelegramMessage({
-                            botToken: settings.botToken,
-                            chatId: settings.chatId,
+                            // botToken and chatId will need to be fetched from bot settings
+                            // Fill in here if needed
                             message: msg,
                             parse_mode: 'HTML',
                         });
@@ -47,7 +47,7 @@ function startScheduler() {
     // Initial run
     runScheduler();
     // Polling interval from settings
-    getSettings((settings) => {
+    getAlertSettings((settings) => {
         const interval = (settings.pollingInterval || 30) * 1000;
         schedulerInterval = setInterval(runScheduler, interval);
     });
