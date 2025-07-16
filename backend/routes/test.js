@@ -1,11 +1,11 @@
 const express = require('express');
 const router = express.Router();
-const { getSettings } = require('../services/settingsService');
+const { getBotSettings } = require('../services/botSettingsService');
 const { sendTelegramMessage } = require('../services/telegramService');
 const { formatSwapMessage } = require('../utils/formatMessage');
 
 router.post('/', (req, res) => {
-    getSettings(async (settings) => {
+    getBotSettings(async (settings) => {
         try {
             // Always pending test swap
             const isApe = Math.random() < 0.5;
