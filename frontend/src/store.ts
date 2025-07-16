@@ -2,7 +2,8 @@ import { configureStore } from '@reduxjs/toolkit';
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 import type { BaseQueryFn, FetchArgs, FetchBaseQueryError } from '@reduxjs/toolkit/query/react';
 
-const API_BASE_URL = '/'; // Assumes same origin, adjust if needed
+const API_BASE_URL = 'https://whalehuntraw-production.up.railway.app'; // Assumes same origin, adjust if needed
+// const API_BASE_URL = '/'; // Assumes same origin, adjust if needed
 
 type Settings = {
     botToken: string;
