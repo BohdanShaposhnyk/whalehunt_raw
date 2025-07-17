@@ -17,7 +17,7 @@ function formatMaxUSD(value) {
  * @returns {string}
  */
 function formatSwapMessage({ inAmount, inAsset, inValue, outAmount, outAsset, outValue, maxValue, status, height, metadata }) {
-    const isApe = inAsset !== 'RUNE.RUJI';
+    const isApe = inAsset !== 'THOR.RUJI';
     const prefix = isApe
         ? `<b>🐒 Ape Detected!</b>`
         : `<b>👹 Jeet Detected!</b>`;
