@@ -3,6 +3,7 @@ const mapAction = require('../utils/mapAction');
 const { getAlertSettings } = require('./settingsService');
 const { sendTelegramMessage } = require('./telegramService');
 const { formatSwapMessage } = require('../utils/formatMessage');
+const { getBotSettings } = require('./botSettingsService');
 
 const VANAHEIMEX_API = 'https://vanaheimex.com/actions?limit=10&asset=THOR.RUJI&type=swap';
 let lastNotifiedTxids = new Set();
@@ -22,13 +23,18 @@ function runScheduler() {
                 if (action.maxValue >= settings.greenRed) {
                     const msg = formatSwapMessage(action);
                     try {
-                        await sendTelegramMessage({
-                            // botToken and chatId will need to be fetched from bot settings
-                            // Fill in here if needed
-                            message: msg,
-                            parse_mode: 'HTML',
+                        // Get bot settings for notification
+                        getBotSettings(async (botSettings) => {
+                            if (botSettings.botToken && botSettings.chatId) {
+                                await sendTelegramMessage({
+                                    botToken: botSettings.botToken,
+                                    chatId: botSettings.chatId,
+                                    message: msg,
+                                    parse_mode: 'HTML',
+                                });
+                                lastNotifiedTxids.add(txid);
+                            }
                         });
-                        lastNotifiedTxids.add(txid);
                     } catch (e) {
                         // Ignore send errors
                     }
