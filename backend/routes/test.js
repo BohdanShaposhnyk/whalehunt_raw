@@ -17,12 +17,17 @@ router.post('/', (req, res) => {
             const outValue = (outAmount * (Math.random() * 10 + 1)).toFixed(2);
             const maxValue = Math.max(inValue, outValue).toFixed(2);
             // Randomize height and swapTarget for duration
-            const height = (Math.floor(Math.random() * 100000) + 100000).toString();
-            const durationBlocks = Math.floor(Math.random() * 1000) + 10; // 10-1009 blocks
-            const swapTarget = (parseInt(height) + durationBlocks).toString();
-            const metadata = { swap: { swapTarget } };
+            // Build a memo for streaming swap duration
+            const interval = Math.floor(Math.random() * 20) + 1; // 1-20 blocks
+            const numSwaps = Math.floor(Math.random() * 200) + 10; // 10-209 partial swaps
+            const memo = `=:b:someaddress:0/${interval}/${numSwaps}:ro/ds:0`;
+            const durationSec = interval * numSwaps * 6;
             const status = 'pending';
-            const msg = formatSwapMessage({ inAmount, inAsset, inValue, outAmount, outAsset, outValue, maxValue, status, height, metadata });
+            const input = {
+                address: 'testaddress',
+                txID: 'testtxid',
+            };
+            const msg = formatSwapMessage({ inAmount, inAsset, inValue, outAmount, outAsset, outValue, maxValue, status, durationSec, input });
             await sendTelegramMessage({
                 botToken: settings.botToken,
                 chatId: settings.chatId,

@@ -16,7 +16,7 @@ function formatMaxUSD(value) {
  * @param {string} [outAsset] - Optional override for outAsset (for test).
  * @returns {string}
  */
-function formatSwapMessage({ inAmount, inAsset, inValue, outAmount, outAsset, outValue, maxValue, status, height, metadata }) {
+function formatSwapMessage({ inAmount, inAsset, inValue, outAmount, outAsset, outValue, maxValue, status, durationSec, input }) {
     const isApe = inAsset !== 'THOR.RUJI';
     const prefix = isApe
         ? `<b>🐒 Ape Detected!</b>`
@@ -26,24 +26,20 @@ function formatSwapMessage({ inAmount, inAsset, inValue, outAmount, outAsset, ou
         `${prefix}\n\n` +
         `${isApe ? '🟢 +' : '🔴 -'}${formatMaxUSD(maxValue)} ${label} \n\n` +
         `${formatAmount(inAmount)} <b>${inAsset}</b> (${formatUSD(inValue)})\n⬇\n` +
-        `${formatAmount(outAmount)} <b>${outAsset}</b> (${formatUSD(outValue)})`;
+        `${formatAmount(outAmount)} <b>${outAsset}</b> (${formatUSD(outValue)})\n`;
+    // Add tx and address links
+    if (input && input.txID && input.address) {
+        msg += `\n<a href="https://thorchain.net/tx/${input.txID}">tx</a> | <a href="https://thorchain.net/address/${input.address}">addy</a>\n`;
+    }
     if (status === 'pending') {
-        // Calculate swap duration
-        let swapTarget = 0;
-        if (metadata && metadata.swap && metadata.swap.swapTarget) {
-            swapTarget = parseInt(metadata.swap.swapTarget, 10);
+        // Use durationSec if available
+        if (durationSec && durationSec > 0) {
+            const h = Math.floor(durationSec / 3600).toString().padStart(2, '0');
+            const m = Math.floor((durationSec % 3600) / 60).toString().padStart(2, '0');
+            const s = (durationSec % 60).toString().padStart(2, '0');
+            const durationStr = `${h}:${m}:${s}`;
+            msg += `\n<i>est. duration: ${durationStr}</i>`;
         }
-        const heightNum = parseInt(height, 10);
-        let durationSec = 0;
-        if (swapTarget && heightNum && swapTarget > heightNum) {
-            durationSec = (swapTarget - heightNum) * 6;
-        }
-        // Format as hh:mm:ss
-        const h = Math.floor(durationSec / 3600).toString().padStart(2, '0');
-        const m = Math.floor((durationSec % 3600) / 60).toString().padStart(2, '0');
-        const s = (durationSec % 60).toString().padStart(2, '0');
-        const durationStr = `${h}:${m}:${s}`;
-        msg += `\n\n<i>est. duration: ${durationStr}</i>`;
         msg += `\n\n⏳ <i>pending...</i>`;
     }
     return msg;

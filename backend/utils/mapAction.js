@@ -15,6 +15,10 @@ function mapAction(apiAction) {
     // Input asset
     const inObj = (apiAction.in && apiAction.in[0]) || {};
     const inCoin = (inObj.coins && inObj.coins[0]) || {};
+    const input = {
+        address: inObj.address || '',
+        txID: inObj.txID || ''
+    };
     const inAmountRaw = parseFloat(inCoin.amount || '0');
     const inAmount = inAmountRaw / 1e8;
     const inAsset = trimAsset(inCoin.asset || (pools[0] || ''));
@@ -50,8 +54,22 @@ function mapAction(apiAction) {
     // maxValue
     const maxValue = Math.max(inValue, outValue);
 
+    // Parse duration from memo for streaming swaps
+    let durationSec = 0;
+    if (swapMeta.memo) {
+        // Example memo: =:b:...:0/15/216:...
+        const memoParts = swapMeta.memo.split(':');
+        // Find the part with the pattern 0/15/216
+        const swapParams = memoParts.find(part => /\d+\/\d+\/\d+/.test(part));
+        if (swapParams) {
+            const [, intervalStr, numSwapsStr] = swapParams.match(/(\d+)\/(\d+)\/(\d+)/) || [];
+            if (intervalStr && numSwapsStr) {
+                durationSec = parseInt(intervalStr) * parseInt(numSwapsStr) * 6;
+            }
+        }
+    }
+
     return {
-        ...apiAction,
         status,
         inAsset,
         inAmount,
@@ -60,9 +78,8 @@ function mapAction(apiAction) {
         outAmount,
         outValue,
         maxValue,
-        pools,
-        height: apiAction.height,
-        metadata: apiAction.metadata,
+        durationSec,
+        input,
     };
 }
 
