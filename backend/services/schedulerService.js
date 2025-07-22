@@ -17,7 +17,7 @@ function runScheduler() {
             const actions = Array.isArray(data) ? data : data.actions || data.data || [];
             for (const apiAction of actions) {
                 const action = mapAction(apiAction);
-                const txid = action.in?.[0]?.txID;
+                const txid = action.input.txID;
                 if (!txid || lastNotifiedTxids.has(txid)) continue;
                 // Whale detection (input or output value > greenRed)
                 if (action.maxValue >= settings.greenRed) {
