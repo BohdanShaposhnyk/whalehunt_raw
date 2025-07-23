@@ -1,3 +1,6 @@
 node_modules/
 package-lock.json
 db.sqlite
+
+# Ignore compiled output
+/dist/
