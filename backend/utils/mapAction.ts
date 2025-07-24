@@ -67,7 +67,7 @@ function getOutputAssetInfo(
     const outAsset = trimAsset(pools[1] ?? '');
     const outPriceUSD = parseFloat(outPriceUSDStr);
 
-    const { coins: outCoins = [] } = outArr.find((o: OutObj) => !o.affiliate) ?? outArr[0] ?? {};
+    const { coins: outCoins = [] } = outArr.find((o: OutObj) => !o.affiliate) ?? {};
     const { amount: outAmountStr } = outCoins[0] ?? {};
     const outAmount = parseFloat(outAmountStr ?? outEstimation) / 1e8;
 
