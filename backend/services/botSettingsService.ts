@@ -7,9 +7,18 @@ export interface BotSettings {
 
 export function getBotSettings(cb: (settings: BotSettings) => void): void {
     db.get('SELECT * FROM bot_settings WHERE id = 1', (err: Error | null, row: any) => {
-        if (err || !row) {
+        if (err) {
+            console.error('Error getting bot settings:', err);
+            cb({ botToken: '', chatId: '' });
+        } else if (!row) {
+            console.log('No bot settings found, returning empty values');
             cb({ botToken: '', chatId: '' });
         } else {
+            console.log('Bot settings retrieved:', {
+                hasToken: !!row.botToken,
+                hasChatId: !!row.chatId,
+                tokenLength: row.botToken?.length || 0
+            });
             cb({
                 botToken: row.botToken || '',
                 chatId: row.chatId || ''
@@ -20,8 +29,15 @@ export function getBotSettings(cb: (settings: BotSettings) => void): void {
 
 export function setBotSettings(settings: BotSettings, cb: (err: Error | null) => void): void {
     db.run(
-        'UPDATE bot_settings SET botToken = ?, chatId = ? WHERE id = 1',
+        'INSERT OR REPLACE INTO bot_settings (id, botToken, chatId) VALUES (1, ?, ?)',
         [settings.botToken, settings.chatId],
-        cb
+        (err: Error | null) => {
+            if (err) {
+                console.error('Error saving bot settings:', err);
+            } else {
+                console.log('Bot settings saved successfully');
+            }
+            cb(err);
+        }
     );
 } 
