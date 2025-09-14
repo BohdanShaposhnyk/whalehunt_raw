@@ -36,14 +36,14 @@ function runScheduler(): void {
                             }
                         });
                     } catch (e) {
-                        console.error('Failed to send notification:', e.message);
+                        console.error('Failed to send notification:', e instanceof Error ? e.message : String(e));
                     }
                 }
             }
             // Keep deduplication set small
             if (lastNotifiedTxids.size > 1000) lastNotifiedTxids = new Set(Array.from(lastNotifiedTxids).slice(-500));
         } catch (e) {
-            console.error('Failed to fetch actions:', e.message);
+            console.error('Failed to fetch actions:', e instanceof Error ? e.message : String(e));
         }
     });
 }
