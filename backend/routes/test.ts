@@ -5,6 +5,43 @@ import { formatSwapMessage } from '../utils/formatMessage.js';
 
 const router = express.Router();
 
+// Simple test endpoint
+router.post('/simple', (req: Request, res: Response) => {
+    getBotSettings(async (settings: BotSettings) => {
+        console.log('Simple test - bot settings:', {
+            hasToken: !!settings.botToken,
+            hasChatId: !!settings.chatId,
+            tokenLength: settings.botToken?.length || 0
+        });
+
+        if (!settings.botToken || !settings.chatId) {
+            return res.status(400).json({
+                error: 'Bot token or chat ID not configured',
+                hasToken: !!settings.botToken,
+                hasChatId: !!settings.chatId
+            });
+        }
+
+        try {
+            console.log('Sending simple test message...');
+            await sendTelegramMessage({
+                botToken: settings.botToken,
+                chatId: settings.chatId,
+                message: 'Test message from WhaleHunt bot!',
+                parse_mode: undefined, // No HTML parsing
+            });
+            console.log('Simple test message sent successfully');
+            res.json({ success: true });
+        } catch (e) {
+            console.error('Simple test failed:', e instanceof Error ? e.message : String(e));
+            res.status(500).json({
+                error: 'Failed to send simple test message',
+                details: e instanceof Error ? e.message : String(e)
+            });
+        }
+    });
+});
+
 router.post('/', (req: Request, res: Response) => {
     getBotSettings(async (settings: BotSettings) => {
         console.log('Test notification - bot settings:', {
@@ -12,15 +49,15 @@ router.post('/', (req: Request, res: Response) => {
             hasChatId: !!settings.chatId,
             tokenLength: settings.botToken?.length || 0
         });
-        
+
         if (!settings.botToken || !settings.chatId) {
-            return res.status(400).json({ 
+            return res.status(400).json({
                 error: 'Bot token or chat ID not configured',
                 hasToken: !!settings.botToken,
                 hasChatId: !!settings.chatId
             });
         }
-        
+
         try {
             // Always pending test swap
             const isApe = Math.random() < 0.5;
@@ -37,7 +74,7 @@ router.post('/', (req: Request, res: Response) => {
                 txID: 'testtxid',
             };
             const msg = formatSwapMessage({ inAmount: parseFloat(inAmount), inAsset, inValue, outAmount: parseFloat(outAmount), outAsset, outValue, maxValue, status, input });
-            
+
             console.log('Sending test notification...');
             await sendTelegramMessage({
                 botToken: settings.botToken,
@@ -49,7 +86,7 @@ router.post('/', (req: Request, res: Response) => {
             res.json({ success: true });
         } catch (e) {
             console.error('Test notification failed:', e instanceof Error ? e.message : String(e));
-            res.status(500).json({ 
+            res.status(500).json({
                 error: 'Failed to send test notification',
                 details: e instanceof Error ? e.message : String(e)
             });
