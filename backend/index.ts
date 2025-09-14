@@ -15,10 +15,28 @@ app.use('/bot-settings', botSettingsRoutes);
 app.use('/alert-settings', alertSettingsRoutes);
 app.use('/test', testRoutes);
 
-startScheduler();
-startPollingBot();
+// Health check endpoint
+app.get('/health', (req: Request, res: Response) => {
+    res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
+// Start services with error handling
+try {
+    startScheduler();
+    console.log('Scheduler started');
+} catch (error) {
+    console.error('Failed to start scheduler:', error);
+}
+
+try {
+    startPollingBot();
+    console.log('Polling bot started');
+} catch (error) {
+    console.error('Failed to start polling bot:', error);
+}
 
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
     console.log(`Backend running on port ${PORT}`);
+    console.log(`Health check available at: http://localhost:${PORT}/health`);
 }); 
