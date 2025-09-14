@@ -8,23 +8,41 @@ import { getBotSettings, BotSettings } from './botSettingsService.js';
 const VANAHEIMEX_API = 'https://vanaheimex.com/actions?limit=10&asset=THOR.RUJI&type=swap';
 let lastNotifiedTxids: Set<string> = new Set();
 let schedulerInterval: NodeJS.Timeout | null = null;
+let consecutiveErrors = 0;
+const MAX_CONSECUTIVE_ERRORS = 5;
 
 function runScheduler(): void {
     getAlertSettings(async (settings: AlertSettings) => {
         if (!settings.enabled) return;
+
+        // Validate settings before proceeding
+        if (!settings.greenRed || settings.greenRed <= 0) {
+            console.log('Invalid whale threshold, skipping scheduler run');
+            return;
+        }
+
         try {
             const { data } = await axios.get(VANAHEIMEX_API);
             const actions = Array.isArray(data) ? data : data.actions || data.data || [];
+
             for (const apiAction of actions) {
-                const action: MappedAction = mapAction(apiAction);
-                const txid = action.input.txID;
-                if (!txid || lastNotifiedTxids.has(txid)) continue;
-                // Whale detection (input or output value > greenRed)
-                if (action.maxValue >= settings.greenRed) {
-                    const msg = formatSwapMessage(action);
-                    try {
+                try {
+                    const action: MappedAction = mapAction(apiAction);
+                    const txid = action.input.txID;
+                    if (!txid || lastNotifiedTxids.has(txid)) continue;
+
+                    // Whale detection (input or output value > greenRed)
+                    if (action.maxValue >= settings.greenRed) {
+                        const msg = formatSwapMessage(action);
+
+                        // Get bot settings and validate before sending
                         getBotSettings(async (botSettings: BotSettings) => {
-                            if (botSettings.botToken && botSettings.chatId) {
+                            if (!botSettings.botToken || !botSettings.chatId) {
+                                console.log('Bot credentials not configured, skipping notification');
+                                return;
+                            }
+
+                            try {
                                 await sendTelegramMessage({
                                     botToken: botSettings.botToken,
                                     chatId: botSettings.chatId,
@@ -33,18 +51,35 @@ function runScheduler(): void {
                                 });
                                 lastNotifiedTxids.add(txid);
                                 console.log(`Notification sent for tx: ${txid}`);
+                            } catch (telegramError) {
+                                console.error('Telegram API error:', telegramError instanceof Error ? telegramError.message : String(telegramError));
+                                // Don't add to notified set if sending failed
                             }
                         });
-                    } catch (e) {
-                        console.error('Failed to send notification:', e instanceof Error ? e.message : String(e));
                     }
+                } catch (actionError) {
+                    console.error('Error processing action:', actionError instanceof Error ? actionError.message : String(actionError));
+                    // Continue with next action
                 }
             }
+
             // Keep deduplication set small
-            if (lastNotifiedTxids.size > 1000) lastNotifiedTxids = new Set(Array.from(lastNotifiedTxids).slice(-500));
+            if (lastNotifiedTxids.size > 1000) {
+                lastNotifiedTxids = new Set(Array.from(lastNotifiedTxids).slice(-500));
+            }
         } catch (e) {
+            consecutiveErrors++;
             console.error('Failed to fetch actions:', e instanceof Error ? e.message : String(e));
+
+            if (consecutiveErrors >= MAX_CONSECUTIVE_ERRORS) {
+                console.error(`Too many consecutive errors (${consecutiveErrors}), stopping scheduler temporarily`);
+                stopScheduler();
+                return;
+            }
         }
+
+        // Reset error counter on successful run
+        consecutiveErrors = 0;
     });
 }
 
@@ -64,4 +99,10 @@ export function stopScheduler(): void {
         clearInterval(schedulerInterval);
         schedulerInterval = null;
     }
+}
+
+export function restartScheduler(): void {
+    stopScheduler();
+    consecutiveErrors = 0;
+    startScheduler();
 } 
