@@ -18,23 +18,11 @@ export async function sendTelegramMessage({ botToken, chatId, message, parse_mod
         disable_web_page_preview: true
     };
 
-    console.log('Sending Telegram message:');
-    console.log('URL:', url);
-    console.log('Chat ID:', chatId);
-    console.log('Message length:', message.length);
-    console.log('Parse mode:', parse_mode || 'HTML');
-    console.log('Message preview:', message.substring(0, 100) + '...');
-
     try {
-        const response = await axios.post(url, payload);
-        console.log('Telegram API response:', response.status, response.statusText);
+        await axios.post(url, payload);
+        console.log('Telegram message sent successfully');
     } catch (error: any) {
-        console.error('Telegram API error details:');
-        console.error('Status:', error.response?.status);
-        console.error('Status Text:', error.response?.statusText);
-        console.error('Response Data:', error.response?.data);
-        console.error('Request URL:', error.config?.url);
-        console.error('Request Data:', error.config?.data);
+        console.error('Telegram API error:', error.response?.data?.description || error.message);
         throw error;
     }
-} 
+}

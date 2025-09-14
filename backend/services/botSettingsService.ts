@@ -11,14 +11,8 @@ export function getBotSettings(cb: (settings: BotSettings) => void): void {
             console.error('Error getting bot settings:', err);
             cb({ botToken: '', chatId: '' });
         } else if (!row) {
-            console.log('No bot settings found, returning empty values');
             cb({ botToken: '', chatId: '' });
         } else {
-            console.log('Bot settings retrieved:', {
-                hasToken: !!row.botToken,
-                hasChatId: !!row.chatId,
-                tokenLength: row.botToken?.length || 0
-            });
             cb({
                 botToken: row.botToken || '',
                 chatId: row.chatId || ''
@@ -34,8 +28,6 @@ export function setBotSettings(settings: BotSettings, cb: (err: Error | null) =>
         (err: Error | null) => {
             if (err) {
                 console.error('Error saving bot settings:', err);
-            } else {
-                console.log('Bot settings saved successfully');
             }
             cb(err);
         }

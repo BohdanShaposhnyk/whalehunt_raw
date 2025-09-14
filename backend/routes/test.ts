@@ -8,29 +8,19 @@ const router = express.Router();
 // Simple test endpoint
 router.post('/simple', (req: Request, res: Response) => {
     getBotSettings(async (settings: BotSettings) => {
-        console.log('Simple test - bot settings:', {
-            hasToken: !!settings.botToken,
-            hasChatId: !!settings.chatId,
-            tokenLength: settings.botToken?.length || 0
-        });
-
         if (!settings.botToken || !settings.chatId) {
             return res.status(400).json({
-                error: 'Bot token or chat ID not configured',
-                hasToken: !!settings.botToken,
-                hasChatId: !!settings.chatId
+                error: 'Bot token or chat ID not configured'
             });
         }
 
         try {
-            console.log('Sending simple test message...');
             await sendTelegramMessage({
                 botToken: settings.botToken,
                 chatId: settings.chatId,
                 message: 'Test message from WhaleHunt bot!',
                 parse_mode: undefined, // No HTML parsing
             });
-            console.log('Simple test message sent successfully');
             res.json({ success: true });
         } catch (e) {
             console.error('Simple test failed:', e instanceof Error ? e.message : String(e));
@@ -44,17 +34,9 @@ router.post('/simple', (req: Request, res: Response) => {
 
 router.post('/', (req: Request, res: Response) => {
     getBotSettings(async (settings: BotSettings) => {
-        console.log('Test notification - bot settings:', {
-            hasToken: !!settings.botToken,
-            hasChatId: !!settings.chatId,
-            tokenLength: settings.botToken?.length || 0
-        });
-
         if (!settings.botToken || !settings.chatId) {
             return res.status(400).json({
-                error: 'Bot token or chat ID not configured',
-                hasToken: !!settings.botToken,
-                hasChatId: !!settings.chatId
+                error: 'Bot token or chat ID not configured'
             });
         }
 
@@ -75,14 +57,12 @@ router.post('/', (req: Request, res: Response) => {
             };
             const msg = formatSwapMessage({ inAmount: parseFloat(inAmount), inAsset, inValue, outAmount: parseFloat(outAmount), outAsset, outValue, maxValue, status, input });
 
-            console.log('Sending test notification...');
             await sendTelegramMessage({
                 botToken: settings.botToken,
                 chatId: settings.chatId,
                 message: msg,
                 parse_mode: 'HTML',
             });
-            console.log('Test notification sent successfully');
             res.json({ success: true });
         } catch (e) {
             console.error('Test notification failed:', e instanceof Error ? e.message : String(e));
