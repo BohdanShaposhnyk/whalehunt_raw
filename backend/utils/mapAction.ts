@@ -78,7 +78,7 @@ function getOutputAssetInfo(
 
 export function mapAction(apiAction: ApiAction): MappedAction {
     const { status, pools = [], metadata: { swap: swapMeta = {} } = {} } = apiAction;
-    const { streamingSwapMeta: { depositedAmount = '0' } = {} } = swapMeta;
+    const { streamingSwapMeta: { depositedCoin: { amount: depositedAmount = '0' } = {} } = {} } = swapMeta;
 
     // Input asset (with destructuring)
     const { address = '', txID = '', coins = [] } = apiAction.in?.[0] ?? {};
