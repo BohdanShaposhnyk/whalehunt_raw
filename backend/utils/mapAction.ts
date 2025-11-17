@@ -69,21 +69,23 @@ function getOutputAssetInfo(
 
     const { coins: outCoins = [] } = outArr.find((o: OutObj) => !o.affiliate) ?? {};
     const { amount: outAmountStr } = outCoins[0] ?? {};
-    const outAmount = parseFloat(outAmountStr ?? outEstimation) / 1e8;
+    const outAmount = Math.max(...[outAmountStr, outEstimation].map(x => parseFloat(x))) / 1e8;
+    // const outAmount = parseFloat(outAmountStr ?? outEstimation) / 1e8;
 
-    const outValue = outAmount * (outPriceUSD);
+    const outValue = outAmount * outPriceUSD;
     return { outAmount, outAsset, outValue };
 }
 
 export function mapAction(apiAction: ApiAction): MappedAction {
     const { status, pools = [], metadata: { swap: swapMeta = {} } = {} } = apiAction;
+    const { streamingSwapMeta: { depositedAmount = '0' } = {} } = swapMeta;
 
     // Input asset (with destructuring)
     const { address = '', txID = '', coins = [] } = apiAction.in?.[0] ?? {};
     const { amount: inAmountStr = '0', asset: inAssetStr = '' } = coins[0] ?? {};
     const input = { address, txID };
-    const inAmountRaw = parseFloat(inAmountStr);
-    const inAmount = inAmountRaw / 1e8;
+    const inAmount = Math.max(...[inAmountStr, depositedAmount].map(x => parseFloat(x))) / 1e8;
+    // const inAmount = inAmountRaw / 1e8;
     const inAsset = trimAsset(inAssetStr || (pools[0] || ''));
     const inPriceUSD = parseFloat(swapMeta.inPriceUSD || '0');
     const inValue = inAmount * inPriceUSD;
