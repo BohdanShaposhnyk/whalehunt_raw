@@ -5,7 +5,7 @@ import { sendTelegramMessage } from './telegramService.js';
 import { formatSwapMessage } from '../utils/formatMessage.js';
 import { getBotSettings, BotSettings } from './botSettingsService.js';
 
-const VANAHEIMEX_API = 'https://vanaheimex.com/actions?limit=10&asset=THOR.RUJI&type=swap';
+const MIDGARD_API = 'https://midgard.ninerealms.com/v2/actions?type=swap&limit=10&asset=THOR.RUJI';
 let lastNotifiedTxids: Set<string> = new Set();
 let schedulerInterval: NodeJS.Timeout | null = null;
 let consecutiveErrors = 0;
@@ -22,41 +22,41 @@ function runScheduler(): void {
         }
 
         try {
-            const { data } = await axios.get(VANAHEIMEX_API);
+            const { data } = await axios.get(MIDGARD_API);
             const actions = Array.isArray(data) ? data : data.actions || data.data || [];
 
             for (const apiAction of actions) {
                 try {
-                    const action: MappedAction = mapAction(apiAction);
+                    const action = mapAction(apiAction);
                     const txid = action.input.txID;
                     if (!txid || lastNotifiedTxids.has(txid)) continue;
 
                     // Whale detection (input or output value > greenRed)
-                    if (action.maxValue >= settings.greenRed) {
-                        const msg = formatSwapMessage(action);
 
-                        // Get bot settings and validate before sending
-                        getBotSettings(async (botSettings: BotSettings) => {
-                            if (!botSettings.botToken || !botSettings.chatId) {
-                                console.log('Bot credentials not configured, skipping notification');
-                                return;
-                            }
+                    const msg = action.maxValue >= settings.greenRed ? formatSwapMessage(action) : `DEBUG: ${action.maxValue} >= ${settings.greenRed} \n${JSON.stringify(action)}`;
 
-                            try {
-                                await sendTelegramMessage({
-                                    botToken: botSettings.botToken,
-                                    chatId: botSettings.chatId,
-                                    message: msg,
-                                    parse_mode: 'HTML',
-                                });
-                                lastNotifiedTxids.add(txid);
-                                console.log(`Notification sent for tx: ${txid}`);
-                            } catch (telegramError) {
-                                console.error('Telegram API error:', telegramError instanceof Error ? telegramError.message : String(telegramError));
-                                // Don't add to notified set if sending failed
-                            }
-                        });
-                    }
+                    // Get bot settings and validate before sending
+                    getBotSettings(async (botSettings: BotSettings) => {
+                        if (!botSettings.botToken || !botSettings.chatId) {
+                            console.log('Bot credentials not configured, skipping notification');
+                            return;
+                        }
+
+                        try {
+                            await sendTelegramMessage({
+                                botToken: botSettings.botToken,
+                                chatId: botSettings.chatId,
+                                message: msg,
+                                parse_mode: 'HTML',
+                            });
+                            lastNotifiedTxids.add(txid);
+                            console.log(`Notification sent for tx: ${txid}`);
+                        } catch (telegramError) {
+                            console.error('Telegram API error:', telegramError instanceof Error ? telegramError.message : String(telegramError));
+                            // Don't add to notified set if sending failed
+                        }
+                    });
+
                 } catch (actionError) {
                     console.error('Error processing action:', actionError instanceof Error ? actionError.message : String(actionError));
                     // Continue with next action

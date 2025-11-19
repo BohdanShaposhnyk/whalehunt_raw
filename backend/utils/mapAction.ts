@@ -97,6 +97,7 @@ export function mapAction(apiAction: ApiAction): MappedAction {
 
     // maxValue
     const maxValue = Math.max(inValue, outValue);
+    // console.log('maxValue', maxValue);
 
     return {
         status,

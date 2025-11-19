@@ -14,7 +14,7 @@ function formatMaxUSD(value: number): string {
 /**
  * Formats a swap notification message for Telegram.
  */
-export function formatSwapMessage({ inAmount, inAsset, inValue, outAmount, outAsset, outValue, maxValue, status, input }: MappedAction): string {
+export function formatSwapMessage({ inAmount, inAsset, inValue, outAmount, outAsset, outValue, maxValue, input }: MappedAction): string {
     const isApe = inAsset !== 'THOR.RUJI';
     const prefix = isApe
         ? `<b>🐒 Ape Detected!</b>`
@@ -27,10 +27,9 @@ export function formatSwapMessage({ inAmount, inAsset, inValue, outAmount, outAs
         `${formatAmount(outAmount)} <b>${outAsset}</b> (${formatUSD(outValue)})\n`;
     // Add tx and address links
     if (input && input.txID && input.address) {
-        msg += `\n<a href="https://thorchain.net/tx/${input.txID}">tx</a> | <a href="https://thorchain.net/address/${input.address}">addy</a>\n`;
-    }
-    if (status === 'pending') {
-        msg += `\n\n⏳ <i>pending...</i>`;
+        msg += `\n<a href="https://thorchain.net/tx/${input.txID}">tx</a> | 
+        <a href="https://thorchain.net/address/${input.address}">
+        ...${input.address.slice(-4)}</a>`;
     }
     return msg;
 } 
