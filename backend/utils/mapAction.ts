@@ -68,7 +68,7 @@ function getOutputAssetInfo(
     const outPriceUSD = parseFloat(outPriceUSDStr);
 
     const { coins: outCoins = [] } = outArr.find((o: OutObj) => !o.affiliate) ?? {};
-    const { amount: outAmountStr } = outCoins[0] ?? {};
+    const { amount: outAmountStr = '0' } = outCoins[0] ?? {};
     const outAmount = Math.max(...[outAmountStr, outEstimation].map(x => parseFloat(x))) / 1e8;
     // const outAmount = parseFloat(outAmountStr ?? outEstimation) / 1e8;
 

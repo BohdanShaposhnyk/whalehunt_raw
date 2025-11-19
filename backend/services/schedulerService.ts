@@ -33,29 +33,34 @@ function runScheduler(): void {
 
                     // Whale detection (input or output value > greenRed)
 
-                    const msg = action.maxValue >= settings.greenRed ? formatSwapMessage(action) : `DEBUG: ${action.maxValue} >= ${settings.greenRed} \n${JSON.stringify(action)}`;
+                    if (action.maxValue >= settings.greenRed) {
+                        const msg = formatSwapMessage(action);
 
-                    // Get bot settings and validate before sending
-                    getBotSettings(async (botSettings: BotSettings) => {
-                        if (!botSettings.botToken || !botSettings.chatId) {
-                            console.log('Bot credentials not configured, skipping notification');
-                            return;
-                        }
+                        // Get bot settings and validate before sending
+                        getBotSettings(async (botSettings: BotSettings) => {
+                            if (!botSettings.botToken || !botSettings.chatId) {
+                                console.log('Bot credentials not configured, skipping notification');
+                                return;
+                            }
 
-                        try {
-                            await sendTelegramMessage({
-                                botToken: botSettings.botToken,
-                                chatId: botSettings.chatId,
-                                message: msg,
-                                parse_mode: 'HTML',
-                            });
-                            lastNotifiedTxids.add(txid);
-                            console.log(`Notification sent for tx: ${txid}`);
-                        } catch (telegramError) {
-                            console.error('Telegram API error:', telegramError instanceof Error ? telegramError.message : String(telegramError));
-                            // Don't add to notified set if sending failed
-                        }
-                    });
+                            try {
+                                await sendTelegramMessage({
+                                    botToken: botSettings.botToken,
+                                    chatId: botSettings.chatId,
+                                    message: msg,
+                                    parse_mode: 'HTML',
+                                });
+                                lastNotifiedTxids.add(txid);
+                                console.log(`Notification sent for tx: ${txid}`);
+                            } catch (telegramError) {
+                                console.error('Telegram API error:', telegramError instanceof Error ? telegramError.message : String(telegramError));
+                                // Don't add to notified set if sending failed
+                            }
+                        });
+                    } else {
+                        lastNotifiedTxids.add(txid);
+                    }
+
 
                 } catch (actionError) {
                     console.error('Error processing action:', actionError instanceof Error ? actionError.message : String(actionError));
