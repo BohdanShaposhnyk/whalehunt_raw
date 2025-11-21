@@ -24,6 +24,13 @@ function runScheduler(): void {
         try {
             const { data } = await axios.get(MIDGARD_API);
             const actions = Array.isArray(data) ? data : data.actions || data.data || [];
+            
+            if (!Array.isArray(actions) || actions.length === 0) {
+                console.log('No actions found in API response');
+                return;
+            }
+            
+            console.log(`Fetched ${actions.length} actions from API`);
 
             for (const apiAction of actions) {
                 try {
@@ -32,14 +39,18 @@ function runScheduler(): void {
                     if (!txid || lastNotifiedTxids.has(txid)) continue;
 
                     // Whale detection (input or output value > greenRed)
+                    console.log(`Processing action: tx=${txid}, maxValue=$${action.maxValue.toFixed(2)}, threshold=$${settings.greenRed}`);
 
                     if (action.maxValue >= settings.greenRed) {
                         const msg = formatSwapMessage(action);
+                        console.log(`Whale detected! maxValue=$${action.maxValue.toFixed(2)} >= threshold=$${settings.greenRed}`);
 
                         // Get bot settings and validate before sending
                         getBotSettings(async (botSettings: BotSettings) => {
                             if (!botSettings.botToken || !botSettings.chatId) {
-                                console.log('Bot credentials not configured, skipping notification');
+                                console.log(`Bot credentials not configured, skipping notification for tx: ${txid}`);
+                                // Still mark as processed to avoid infinite retries
+                                lastNotifiedTxids.add(txid);
                                 return;
                             }
 
@@ -51,14 +62,15 @@ function runScheduler(): void {
                                     parse_mode: 'HTML',
                                 });
                                 lastNotifiedTxids.add(txid);
-                                console.log(`Notification sent for tx: ${txid}`);
+                                console.log(`✅ Notification sent for tx: ${txid} (maxValue=$${action.maxValue.toFixed(2)})`);
                             } catch (telegramError) {
-                                console.error('Telegram API error:', telegramError instanceof Error ? telegramError.message : String(telegramError));
-                                // Don't add to notified set if sending failed
+                                console.error(`❌ Telegram API error for tx ${txid}:`, telegramError instanceof Error ? telegramError.message : String(telegramError));
+                                // Don't add to notified set if sending failed, so it can retry
                             }
                         });
                     } else {
                         lastNotifiedTxids.add(txid);
+                        console.log(`Action below threshold: maxValue=$${action.maxValue.toFixed(2)} < threshold=$${settings.greenRed}, tx: ${txid}`);
                     }
 
 
